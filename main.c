@@ -63,10 +63,11 @@
 #include "atsens.h"
 
 #include "ds18b20.h"
+#include "dht22.h"
 #include "sht21.h"
-#include "si1145.h"
-#include "bh1750.h"
-#include "bmp280.h"
+//#include "si1145.h"
+//#include "bh1750.h"
+//#include "bmp280.h"
 
 
 // globals
@@ -78,8 +79,10 @@ uint8_t si1145_done = 0x00;
 uint8_t bh1750_done = 0x00;
 uint8_t bmp280_done = 0x00;
 
+struct dht22 dht_out;
+
 // software version string
-static const char PROGMEM SWVers[4] = "0.01"; // 4 octet ASCII
+static const char PROGMEM SWVers[4] = "0.02"; // 4 octet ASCII
 
 /*
  *  embed and send modbus frame
@@ -126,6 +129,7 @@ int main(void)
     // 1w pin init
     DDRB &= ~(DDB4);
     oneWireInit(BUS);
+    dht_init(&dht_out, 4);
 
     // 1wire devices store
     oneWireDevice devices[MAX_DEVICES];
@@ -425,107 +429,136 @@ int main(void)
                                     }
                                 }
 
-                                // return I2C DEV VALUES
-                                if ( ( daddr >= 0x1200 ) &&
-                                     ( daddr <= 0x1201 ) )
+                                // // return I2C DEV VALUES
+                                // if ( ( daddr >= 0x1200 ) &&
+                                //      ( daddr <= 0x1201 ) )
+                                // {
+                                //     // requested amount
+                                //     if ( modbus[5] != 0x02 ) break;
+
+                                //     sendbuff[2] = 0x04; // mslen
+
+                                //     float V;
+
+                                //     if ( daddr == 0x1200 )
+                                //       V = (float)sht21ReadValue( SHT21_TEMP ) / 1000;
+                                //     if ( daddr == 0x1201 )
+                                //       V = (float)sht21ReadValue( SHT21_HUMI ) / 1000;
+
+                                //     sendbuff[3] = ((uint8_t*)(&V))[3];
+                                //     sendbuff[4] = ((uint8_t*)(&V))[2];
+                                //     sendbuff[5] = ((uint8_t*)(&V))[1];
+                                //     sendbuff[6] = ((uint8_t*)(&V))[0];
+
+                                //     send_modbus_array( &sendbuff[0], 9 );
+                                // }
+
+                                // // return I2C DEV VALUES
+                                // if ( ( daddr >= 0x1210 ) &&
+                                //      ( daddr <= 0x1212 ) )
+                                // {
+                                //     // requested amount
+                                //     if ( modbus[5] != 0x02 ) break;
+
+                                //     sendbuff[2] = 0x04; // mslen
+
+                                //     if ( si1145_done == 0x00 )
+                                //     {
+                                //       si1145_init();
+                                //       si1145_done = 0x01;
+                                //     }
+
+                                //     float V;
+
+                                //     if ( daddr == 0x1210 )
+                                //       V = si1145_read_value(SI1145_READ_VI);
+                                //     if ( daddr == 0x1211 )
+                                //       V = si1145_read_value(SI1145_READ_IR);
+                                //     if ( daddr == 0x1212 )
+                                //       V = si1145_read_value(SI1145_READ_UV);
+
+                                //     sendbuff[3] = ((uint8_t*)(&V))[3];
+                                //     sendbuff[4] = ((uint8_t*)(&V))[2];
+                                //     sendbuff[5] = ((uint8_t*)(&V))[1];
+                                //     sendbuff[6] = ((uint8_t*)(&V))[0];
+
+                                //     send_modbus_array( &sendbuff[0], 9 );
+                                // }
+
+                                // // return I2C DEV VALUES
+                                // if ( daddr == 0x1220 )
+                                // {
+                                //     // requested amount
+                                //     if ( modbus[5] != 0x02 ) break;
+
+                                //     sendbuff[2] = 0x04; // mslen
+
+                                //     if ( bh1750_done == 0x00 )
+                                //     {
+                                //       bh1750_init();
+                                //       bh1750_done = 0x01;
+                                //     }
+
+                                //     float V = bh1750_read_value();
+
+                                //     sendbuff[3] = ((uint8_t*)(&V))[3];
+                                //     sendbuff[4] = ((uint8_t*)(&V))[2];
+                                //     sendbuff[5] = ((uint8_t*)(&V))[1];
+                                //     sendbuff[6] = ((uint8_t*)(&V))[0];
+
+                                //     send_modbus_array( &sendbuff[0], 9 );
+                                // }
+
+                                // // return I2C DEV VALUES
+                                // if ( ( daddr >= 0x1230 ) &&
+                                //      ( daddr <= 0x1231 ) )
+                                // {
+                                //     // requested amount
+                                //     if ( modbus[5] != 0x02 ) break;
+
+                                //     sendbuff[2] = 0x04; // mslen
+
+                                //     if ( bmp280_done == 0x00 )
+                                //     {
+                                //       bmp280_init();
+                                //       bmp280_done = 0x01;
+                                //     }
+
+                                //     int32_t V;
+                                //     if ( daddr == 0x1230 )
+                                //       V = bmp280_read_value( BMP280_TEMP );
+                                //     if ( daddr == 0x1231 )
+                                //       V = bmp280_read_value( BMP280_PRES );
+
+                                //     sendbuff[3] = ((uint8_t*)(&V))[3];
+                                //     sendbuff[4] = ((uint8_t*)(&V))[2];
+                                //     sendbuff[5] = ((uint8_t*)(&V))[1];
+                                //     sendbuff[6] = ((uint8_t*)(&V))[0];
+
+                                //     send_modbus_array( &sendbuff[0], 9 );
+                                // }
+
+                                // return DHT22 DEV VALUES
+                                if ( ( daddr >= 0x2200 ) &&
+                                     ( daddr <= 0x2201 ) )
                                 {
                                     // requested amount
                                     if ( modbus[5] != 0x02 ) break;
 
                                     sendbuff[2] = 0x04; // mslen
 
-                                    float V;
-
-                                    if ( daddr == 0x1200 )
-                                      V = (float)sht21ReadValue( SHT21_TEMP ) / 1000;
-                                    if ( daddr == 0x1201 )
-                                      V = (float)sht21ReadValue( SHT21_HUMI ) / 1000;
-
-                                    sendbuff[3] = ((uint8_t*)(&V))[3];
-                                    sendbuff[4] = ((uint8_t*)(&V))[2];
-                                    sendbuff[5] = ((uint8_t*)(&V))[1];
-                                    sendbuff[6] = ((uint8_t*)(&V))[0];
-
-                                    send_modbus_array( &sendbuff[0], 9 );
-                                }
-
-                                // return I2C DEV VALUES
-                                if ( ( daddr >= 0x1210 ) &&
-                                     ( daddr <= 0x1212 ) )
-                                {
-                                    // requested amount
-                                    if ( modbus[5] != 0x02 ) break;
-
-                                    sendbuff[2] = 0x04; // mslen
-
-                                    if ( si1145_done == 0x00 )
-                                    {
-                                      si1145_init();
-                                      si1145_done = 0x01;
+                                    float V, Vt, Vh;
+                                    
+                                    if(dht_read_data(&dht_out, &Vt, &Vh)){
+                                        if ( daddr == 0x2200 )
+                                            V = Vt;
+                                        if ( daddr == 0x2201 )
+                                            V = Vh;                            
+                                    }else{
+                                        V = -255; 
                                     }
 
-                                    float V;
-
-                                    if ( daddr == 0x1210 )
-                                      V = si1145_read_value(SI1145_READ_VI);
-                                    if ( daddr == 0x1211 )
-                                      V = si1145_read_value(SI1145_READ_IR);
-                                    if ( daddr == 0x1212 )
-                                      V = si1145_read_value(SI1145_READ_UV);
-
-                                    sendbuff[3] = ((uint8_t*)(&V))[3];
-                                    sendbuff[4] = ((uint8_t*)(&V))[2];
-                                    sendbuff[5] = ((uint8_t*)(&V))[1];
-                                    sendbuff[6] = ((uint8_t*)(&V))[0];
-
-                                    send_modbus_array( &sendbuff[0], 9 );
-                                }
-
-                                // return I2C DEV VALUES
-                                if ( daddr == 0x1220 )
-                                {
-                                    // requested amount
-                                    if ( modbus[5] != 0x02 ) break;
-
-                                    sendbuff[2] = 0x04; // mslen
-
-                                    if ( bh1750_done == 0x00 )
-                                    {
-                                      bh1750_init();
-                                      bh1750_done = 0x01;
-                                    }
-
-                                    float V = bh1750_read_value();
-
-                                    sendbuff[3] = ((uint8_t*)(&V))[3];
-                                    sendbuff[4] = ((uint8_t*)(&V))[2];
-                                    sendbuff[5] = ((uint8_t*)(&V))[1];
-                                    sendbuff[6] = ((uint8_t*)(&V))[0];
-
-                                    send_modbus_array( &sendbuff[0], 9 );
-                                }
-
-                                // return I2C DEV VALUES
-                                if ( ( daddr >= 0x1230 ) &&
-                                     ( daddr <= 0x1231 ) )
-                                {
-                                    // requested amount
-                                    if ( modbus[5] != 0x02 ) break;
-
-                                    sendbuff[2] = 0x04; // mslen
-
-                                    if ( bmp280_done == 0x00 )
-                                    {
-                                      bmp280_init();
-                                      bmp280_done = 0x01;
-                                    }
-
-                                    int32_t V;
-                                    if ( daddr == 0x1230 )
-                                      V = bmp280_read_value( BMP280_TEMP );
-                                    if ( daddr == 0x1231 )
-                                      V = bmp280_read_value( BMP280_PRES );
-
+                                    
                                     sendbuff[3] = ((uint8_t*)(&V))[3];
                                     sendbuff[4] = ((uint8_t*)(&V))[2];
                                     sendbuff[5] = ((uint8_t*)(&V))[1];

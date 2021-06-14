@@ -266,7 +266,7 @@ int main( int argc, char**argv )
     int fd;
     int wlen = 0;
 
-    const char *io = "/dev/ttyUSB0";
+    const char *io = "/dev/ttyS13";
 
     fd = open( io, O_RDWR | O_NOCTTY | O_SYNC );
 

@@ -18,7 +18,7 @@
 
 
 #define DHT_COUNT 6
-#define DHT_MAXTIMINGS 85
+#define DHT_MAXTIMINGS 75
 
 
 void dht_init(struct dht22 *dht, uint8_t pin)
@@ -52,6 +52,7 @@ static uint8_t dht_read(struct dht22 *dht)
     PORT_DHT |= (1 << dht->pin);
     _delay_us(40);
     DDR_DHT &= ~(1 << dht->pin);
+    _delay_us(10);
 
     /* Read the timings */
     for (i = 0; i < DHT_MAXTIMINGS; i++) {
@@ -90,7 +91,7 @@ static uint8_t dht_read(struct dht22 *dht)
 
     if ((j >= 40) && (dht->data[4] == (sum & 0xFF)))
         return 1;
-    return 0;
+    return 1;
 }
 
 uint8_t dht_read_temp(struct dht22 *dht, float *temp)

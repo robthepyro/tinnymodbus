@@ -20,6 +20,7 @@ echo
 ##
 
 avr-gcc -c $CFLAGS -flto -MF build/ds18b20.o.d  -Wa,-adhlns=build/ds18b20.lst    devs/ds18b20.c  -o build/ds18b20.o
+avr-gcc -c $CFLAGS -flto -MF build/dht22.o.d    -Wa,-adhlns=build/dht22.lst      devs/dht22.c    -o build/dht22.o
 avr-gcc -c $CFLAGS -flto -MF build/sht21.o.d    -Wa,-adhlns=build/sht21.lst      devs/sht21.c    -o build/sht21.o
 avr-gcc -c $CFLAGS -flto -MF build/si1145.o.d   -Wa,-adhlns=build/si1145.lst     devs/si1145.c   -o build/si1145.o
 avr-gcc -c $CFLAGS -flto -MF build/bh1750.o.d   -Wa,-adhlns=build/bh1750.lst     devs/bh1750.c   -o build/bh1750.o
@@ -37,18 +38,18 @@ avr-gcc -c $CFLAGS -flto -MF build/main.o.d     -Wa,-adhlns=build/main.lst      
 
 avr-gcc $CFLAGS -flto -o build/main.elf \
                 build/main.o build/usiuartx.o build/crc16.o build/crc8.o build/sht21.o build/si1145.o build/bh1750.o \
-                build/bmp280.o build/1wire.o build/softi2c.o build/atsens.o build/ds18b20.o build/eeprom.o \
+                build/bmp280.o build/1wire.o build/softi2c.o build/atsens.o build/ds18b20.o build/dht22.o build/eeprom.o \
         -Wl,--relax,--gc-sections,-Map=build/main.map
 
 
 echo "MAIN:"
-avr-size --format=avr --mcu=attiny85 build/main.elf
+avr-size  build/main.elf
 
 
 avr-objcopy -j .text -j .data -O ihex build/main.elf main.hex
 avr-objcopy -j .eeprom --no-change-warnings --change-section-lma .eeprom=0x0000 -O ihex build/main.elf boot.eep
 
-MAINSIZE=$(avr-size --format=avr --mcu=attiny85 build/main.elf | grep Program | awk '{print $2}')
+MAINSIZE=$(avr-size build/main.elf | grep Program | awk '{print $2}')
 printf "MAIN: 0x0000 - 0x%04x \n\n" $MAINSIZE
 
 
@@ -70,10 +71,10 @@ avr-gcc $CFLAGS -flto -ffreestanding -nostartfiles -o build/boot.elf build/crt1.
 
 
 echo "BOOT:"
-avr-size --format=avr --mcu=attiny85 build/boot.elf
+avr-size build/boot.elf
 avr-objcopy -j .text -j .data -O ihex build/boot.elf boot.hex
 
-BOOTSIZE=$(avr-size --format=avr --mcu=attiny85 build/boot.elf | grep Program | awk '{print $2}')
+BOOTSIZE=$(avr-size build/boot.elf | grep Program | awk '{print $2}')
 printf "BOOT: 0x%04x - 0x%04x \n\n" $ENTRYADDR $(( $ENTRYADDR+$BOOTSIZE ))
 
 ## check if main overlap boot
