@@ -51,6 +51,7 @@
 
 import sys
 import logging
+import time 
 
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
@@ -119,7 +120,23 @@ try:
   decodert = BinaryPayloadDecoder.fromRegisters(result.registers[2:4], byteorder=Endian.Big, wordorder=Endian.Big)
   print (decodert.decode_32bit_float(), " C (dht22)\n")
   print (decoderh.decode_32bit_float(), " % (dht22)\n")
-  
+
+  print ("")
+  time.sleep(2)
+
+  print ("0x04 0x2201\n")
+  result  = client.read_input_registers(address=0x2201, count=0x02, unit=idslave)
+  decoder = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+  print (decoder.decode_32bit_float(), " C (dht22)\n")
+
+  print ("")
+  time.sleep(2)
+
+  print ("0x04 0x2202\n")
+  result  = client.read_input_registers(address=0x2202, count=0x02, unit=idslave)
+  decoder = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+  print (decoder.decode_32bit_float(), " % (dht22)\n")
+
 except:
 
   print ("No dht22 found.")

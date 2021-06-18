@@ -69,4 +69,13 @@ uint8_t dht_read_hum(struct dht22 *dht, float *hum);
 uint8_t dht_read_data(struct dht22 *dht, float *temp, float *hum);
 
 
+// Expect the signal line to be at the specified level for a period of time and
+// return a count of loop cycles spent at that level (this cycle count can be
+// used to compare the relative time of two pulses).  If more than a millisecond
+// ellapses without the level changing then the call fails with a 0 response.
+// This is adapted from Arduino's pulseInLong function (which is only available
+// in the very latest IDE versions):
+//   https://github.com/arduino/Arduino/blob/master/hardware/arduino/avr/cores/arduino/wiring_pulse.c
+uint8_t expectPulse(_Bool level, uint8_t _pin);
+
 #endif

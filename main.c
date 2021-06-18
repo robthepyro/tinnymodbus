@@ -82,7 +82,7 @@ uint8_t bmp280_done = 0x00;
 struct dht22 dht_out;
 
 // software version string
-static const char PROGMEM SWVers[4] = "0.02"; // 4 octet ASCII
+static const char PROGMEM SWVers[4] = "0.03"; // 4 octet ASCII
 
 /*
  *  embed and send modbus frame
@@ -540,31 +540,53 @@ int main(void)
 
                                 // return DHT22 DEV VALUES
                                 if ( ( daddr >= 0x2200 ) &&
-                                     ( daddr <= 0x2201 ) )
+                                     ( daddr <= 0x2202 ) )
                                 {
-                                    // requested amount
-                                    if ( modbus[5] != 0x02 ) break;
+                                    // requested amount&
+                                    if (daddr == 0x2200){
+                                        if(modbus[5] != 0x04) break; // humidity and temp 8 bytes
+                                        else sendbuff[2] = 0x08; // mslen
+                                    }
+                                    if (daddr == 0x2201 || daddr == 0x2202){
+                                        if(modbus[5] != 0x02 ) break; // humidity or temp 4 bytes
+                                        else sendbuff[2] = 0x04; // mslen
+                                    } 
+                                    
 
-                                    sendbuff[2] = 0x04; // mslen
-
-                                    float V, Vt, Vh;
+                                    float Vt, Vh;
                                     
                                     if(dht_read_data(&dht_out, &Vt, &Vh)){
-                                        if ( daddr == 0x2200 )
-                                            V = Vt;
-                                        if ( daddr == 0x2201 )
-                                            V = Vh;                            
+                                        if ( daddr == 0x2200 ){
+                                            sendbuff[3] = ((uint8_t*)(&Vh))[3];
+                                            sendbuff[4] = ((uint8_t*)(&Vh))[2];
+                                            sendbuff[5] = ((uint8_t*)(&Vh))[1];
+                                            sendbuff[6] = ((uint8_t*)(&Vh))[0];
+                                            sendbuff[7] = ((uint8_t*)(&Vt))[3];
+                                            sendbuff[8] = ((uint8_t*)(&Vt))[2];
+                                            sendbuff[9] = ((uint8_t*)(&Vt))[1];
+                                            sendbuff[10] = ((uint8_t*)(&Vt))[0];
+                                            send_modbus_array( &sendbuff[0], 13 );
+                                        }
+                                        if ( daddr == 0x2201 ){
+                                            sendbuff[3] = ((uint8_t*)(&Vt))[3];
+                                            sendbuff[4] = ((uint8_t*)(&Vt))[2];
+                                            sendbuff[5] = ((uint8_t*)(&Vt))[1];
+                                            sendbuff[6] = ((uint8_t*)(&Vt))[0];
+                                            send_modbus_array( &sendbuff[0], 9 );
+                                        }
+                                        if ( daddr == 0x2202 ){
+                                            sendbuff[3] = ((uint8_t*)(&Vh))[3];
+                                            sendbuff[4] = ((uint8_t*)(&Vh))[2];
+                                            sendbuff[5] = ((uint8_t*)(&Vh))[1];
+                                            sendbuff[6] = ((uint8_t*)(&Vh))[0];  
+                                            send_modbus_array( &sendbuff[0], 9 );                          
+                                        }
                                     }else{
-                                        V = -255; 
+                                        // failed to respond
+                                        send_modbus_exception( &sendbuff[0], 0x11 ); 
                                     }
 
                                     
-                                    sendbuff[3] = ((uint8_t*)(&V))[3];
-                                    sendbuff[4] = ((uint8_t*)(&V))[2];
-                                    sendbuff[5] = ((uint8_t*)(&V))[1];
-                                    sendbuff[6] = ((uint8_t*)(&V))[0];
-
-                                    send_modbus_array( &sendbuff[0], 9 );
                                 }
 
                                 break; // fcode=0x04
